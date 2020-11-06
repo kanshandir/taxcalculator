@@ -78,7 +78,12 @@ def final_tax(message, res2, res, n):
         y = int(message.text)
         cy = int(datetime.now().strftime('%Y'))
         d = cy - y
-        if 5 < d <= 10:
+        if d < 5:
+            if n == 12:
+                res3 = res * 1
+            else:
+                res3 = res2 * 1
+        elif 5 < d <= 10:
             if n == 12:
                 res3 = res * 0.75
             else:
