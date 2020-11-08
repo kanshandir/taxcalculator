@@ -51,7 +51,12 @@ def continue_tax(message, res):
     res2 = 0
     n = 0
     try:
-        m = int(message.text)
+        if message.text.isdigit():
+            m = int(message.text)
+        else:
+            months = {"январь": 1, "февраль": 2, "март": 3, "апрель": 4, "май": 5, "июнь": 6, "июль": 7, "август": 8,
+                      "сентябрь": 9, "октябрь": 10, "ноябрь": 11, "декабрь": 12}
+            m = months[message.text.lower()]
         if 0 < m < 12:
             n = 12 - m
             res1 = res / 12 * m
@@ -59,14 +64,12 @@ def continue_tax(message, res):
         elif m == 12:
             n = m - 11
             res2 = res / 12
-        else:
-            bot.send_message(message.chat.id, "Не корректно, ведите номерное обозначание месяца (от 1 до 12)")
         msg1 = bot.send_message(message.chat.id, "Осталось узнать, применяются ли поправочные коэффициенты? \n"
                                                  "Введите год выпуска автомобиля:")
         bot.register_next_step_handler(msg1, final_tax, res2, res, n)
     except Exception as e:
         print(e)
-        bot.reply_to(message, 'Это не число или что то пошло не так...')
+        bot.reply_to(message, 'Что то пошло не так...проверьте правильность ввода месяца')
 
 
 def final_tax(message, res2, res, n):
