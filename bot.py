@@ -18,15 +18,15 @@ def send_welcome(message):
                            "Моя задача - помочь Вам рассчитать транспортный налог.".format(message.from_user,
                                                                                            bot.get_me()),
                            reply_markup=markup)
-    bot.register_next_step_handler(msg, engine_pwr, msg)
+    bot.register_next_step_handler(msg, engine_pwr_message, msg)
 
 
-def engine_pwr(message, msg):
+def engine_pwr_message(message, msg):
     bot.send_message(message.chat.id, "Введите мощность автомобиля (л.с.): ")
-    bot.register_next_step_handler(msg, process_proc_step, msg)
+    bot.register_next_step_handler(msg, engine_pwr_choose, msg)
 
 
-def process_proc_step(message, msg):
+def engine_pwr_choose(message, msg):
     res = 0
     try:
         pwr = int(message.text)
@@ -41,13 +41,13 @@ def process_proc_step(message, msg):
         elif 250 <= pwr < 999:
             res = pwr * 130
         bot.send_message(message.chat.id, "Введите месяц, когда был оформлен автомобиль:")
-        bot.register_next_step_handler(msg, continue_tax, res)
+        bot.register_next_step_handler(msg, month_choose, res, pwr)
     except Exception as e:
         print(e)
         bot.reply_to(message, 'Это не число или что то пошло не так...')
 
 
-def continue_tax(message, res):
+def month_choose(message, res, pwr):
     res2 = 0
     n = 0
     try:
@@ -66,13 +66,13 @@ def continue_tax(message, res):
             res2 = res / 12
         msg1 = bot.send_message(message.chat.id, "Осталось узнать, применяются ли поправочные коэффициенты? \n"
                                                  "Введите год выпуска автомобиля:")
-        bot.register_next_step_handler(msg1, final_tax, res2, res, n)
+        bot.register_next_step_handler(msg1, final_calculations, res2, res, n, pwr)
     except Exception as e:
         print(e)
         bot.reply_to(message, 'Что то пошло не так...проверьте правильность ввода месяца')
 
 
-def final_tax(message, res2, res, n):
+def final_calculations(message, res2, res, n, pwr):
     res3 = 0
     markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
     item1 = types.KeyboardButton("Рассчитать налог!")
@@ -97,15 +97,20 @@ def final_tax(message, res2, res, n):
             else:
                 res3 = res2 * 1 / 2
         msg2 = bot.send_message(message.chat.id, "Необходимая информация собрана", reply_markup=markup)
-        bot.register_next_step_handler(msg2, last_last, res3, d, n)
+        bot.register_next_step_handler(msg2, get_result, res3, d, n, pwr)
     except Exception as e:
         print(e)
         bot.reply_to(message, 'Это не число или что то пошло не так...')
 
 
-def last_last(message, res3, d, n):
-    bot.send_message(message.chat.id, f' Вашему автомобилю {d} лет \n'
-                                      f'Ваш налог за {n} мес. с учетом возраста автомобиля составит: {res3}')
+def get_result(message, res3, d, n, pwr):
+    if d > 10 and 0 < pwr < 100:
+        bot.send_message(message.chat.id, f'Вашему автомобилю больше 10 лет\n'
+                                          f'Мощность меньше 100 л.с.\n'
+                                          f'Ваш налог составит 0 рублей')
+    else:
+        bot.send_message(message.chat.id, f' Вашему автомобилю {d} лет \n'
+                                          f'Ваш налог за {n} мес. с учетом возраста автомобиля составит: {res3}')
 
 
 if __name__ == '__main__':
